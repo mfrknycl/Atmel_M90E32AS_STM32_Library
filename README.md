@@ -202,3 +202,7 @@ double GetTemp(void);
 ## License
 
 This project is licensed under the MIT License - see the [LICENSE](LICENSE) file for details
+
+## Credits
+
+This application uses components from [whatnick/ATM90E32_Arduino](https://github.com/whatnick/ATM90E32_Arduino) which is an Arduino Library for M90E32AS. I would like to thank to whatnick and CircuitSetup for creating this library.
