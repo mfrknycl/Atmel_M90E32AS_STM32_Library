@@ -25,7 +25,7 @@ int main(void){
   HAL_Delay(1000);
 }
 ```
-Following code segment shows that how SPI is configurated using STM32CubeMX software.
+Following code segment shows that how SPI is configurated using STM32CubeMX software. Clock signal is 8Mhz. TFT LCD is using 1000.0 KBits/s.
 
 ```c
 static void MX_SPI1_Init(void)
@@ -201,4 +201,4 @@ double GetTemp(void);
 
 ## License
 
-This project is licensed under the MIT License - see the [LICENSE.md](LICENSE) file for details
+This project is licensed under the MIT License - see the [LICENSE](LICENSE) file for details
