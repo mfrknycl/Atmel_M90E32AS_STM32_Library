@@ -12,6 +12,12 @@
 #define READ   1
 #define WRITE  0
 
+#define Voltage 1
+#define Current 0
+
+#define Channel_A 1
+#define Channel_B 2
+#define Channel_C 3
 
 //Status and Special Register
 #define MeterEn          (0x00)   // (R/W) Metering Enable    
@@ -60,7 +66,8 @@
 #define GainCIrms01      (0x2E)   // (R/W) Phase C Gain Compensation for Current Segment 0 and 1
 #define GainCIrms2       (0x2F)   // (R/W) Phase C Gain Compensation for Current Segment 2
 
-//Configuration Registers
+//Configuration Registers*********
+
 #define PLconstH      	 (0x31)   // (R/W) High Word of PL_Constant
 #define PLconstL      	 (0x32)   // (R/W) Low Word of PL_Constant
 #define MMode0      	   (0x33)   // (R/W) Metering Method Configuration
@@ -72,7 +79,7 @@
 #define QPhaseTh      	 (0x39)   // (R/W) Startup Power Threshold for Any Phase (ReActive Energy Accumulation)
 #define SPhaseTh      	 (0x3A)   // (R/W) Startup Power Threshold for Any Phase (Apparent Energy Accumulation)
 
-//Calibration Registers
+//Calibration Registers*********
 #define PoffsetA      	 (0x41)   // (R/W) Phase A Active Power offset
 #define QoffsetA      	 (0x42)   // (R/W) Phase A Reactive Power offset
 #define PoffsetB      	 (0x43)   // (R/W) Phase B Active Power offset
@@ -86,7 +93,7 @@
 #define PQGainC      	   (0x4B)   // (R/W) Phase C Calibration Gain
 #define PhiC      	     (0x4C)   // (R/W) Phase C Calibration Phase Angle
 
-//Fundamental/ Harmonic Energy Calibration Registers
+//Fundamental/ Harmonic Energy Calibration Registers*********
 #define PoffsetAF      	 (0x51)   // (R/W) Phase A Fundamental Active Power offset
 #define PoffsetBF      	 (0x52)   // (R/W) Phase B Fundamental Active Power offset
 #define PoffsetCF      	 (0x53)   // (R/W) Phase C Fundamental Active Power offset
@@ -94,7 +101,7 @@
 #define PGainBF      	 	 (0x55)   // (R/W) Phase B Fundamental Calibration Gain
 #define PGainCF      	 	 (0x56)   // (R/W) Phase C Fundamental Calibration Gain
 
-//Measurement Calibration Registers
+//Measurement Calibration Registers*********
 #define UgainA      	 	 (0x61)   // (R/W) Phase A Voltage RMS Gain
 #define IgainA      	 	 (0x62)   // (R/W) Phase A Current RMS Gain
 #define UoffsetA      	 (0x63)   // (R/W) Phase A Voltage RMS offset
@@ -243,30 +250,203 @@
 /* Typedef Decleration ---------------------------------------------------- */
 
 
+typedef struct{
+		
+//********************* Power and Power Factor Register *********************
+
+//RMS for Voltage
+double GetRMSVoltage_A; 				 //RMS for Voltage A
+double GetRMSVoltage_B; 				 //RMS for Voltage B
+double GetRMSVoltage_C; 				 //RMS for Voltage C
+
+//RMS for Current
+double GetRMSCurrent_A; 				 //RMS for Current A
+double GetRMSCurrent_B; 				 //RMS for Current B
+double GetRMSCurrent_C; 				 //RMS for Current C
+
+//Active Power
+double GetActivePower_A; 			   //Active Power A
+double GetActivePower_B; 			   //Active Power B
+double GetActivePower_C; 			   //Active Power C
+double GetTotalActivePower; 	   //Total Active Power
+
+//Reactive Power
+double GetReactivePower_A; 		   //Reactive Power A
+double GetReactivePower_B; 		   //Reactive Power B
+double GetReactivePower_C; 		   //Reactive Power C
+double GetTotalReactivePower;    //Total Reactive Power
+
+//Apparent Power
+double GetApparentPower_A; 		   //Apparent Power A
+double GetApparentPower_B; 		   //Apparent Power B
+double GetApparentPower_C; 		   //Apparent Power C
+double GetTotalApparentPower;    //Total Apparent Power
+
+//Fundamental Power
+double GetFundamentalPower_A;    //Fundamental Power A
+double GetFundamentalPower_B; 	 //Fundamental Power B
+double GetFundamentalPower_C;    //Fundamental Power C
+double GetTotalFundamentalPower; //Total Fundamental Power
+
+//Harmonic Power
+double GetHarmonicPower_A; 		 //Harmonic Power A
+double GetHarmonicPower_B; 		 //Harmonic Power B
+double GetHarmonicPower_C; 		 //Harmonic Power C
+double GetTotalHarmonicPower;  //Total Harmonic Power 
+
+//********************* Power Factor *********************
+double GetActivePowerFactor_A;
+double GetActivePowerFactor_B;
+double GetActivePowerFactor_C;
+double GetTotalActivePowerFactor;
+
+//********************* Phase Angle *********************
+double GetPhaseAngle_A;
+double GetPhaseAngle_B;
+double GetPhaseAngle_C;
+
+
+double GetFreq; 							 //Frequency
+double GetTemp; 							 //Temperature
+double GetPeak_A;						   //Peak Value
+
+//********************* Regular Energy Measuretment *********************
+//Forward Active Energy
+double GetForwardActiveEnergy_A;
+double GetForwardActiveEnergy_B;
+double GetForwardActiveEnergy_C;
+double GetTotalForwardActiveEnergy;
+
+//Reverse Active Energy
+double GetReverseActiveEnergy_A;
+double GetReverseActiveEnergy_B;
+double GetReverseActiveEnergy_C;
+double GetTotalReverseActiveEnergy;
+	
+//Forward Reactive Energy
+double GetForwardReactiveEnergy_A;
+double GetForwardReactiveEnergy_B;
+double GetForwardReactiveEnergy_C;
+double GetTotalForwardReactiveEnergy;
+
+//Reverse Reactive Energy
+double GetReverseReactiveEnergy_A;
+double GetReverseReactiveEnergy_B;
+double GetReverseReactiveEnergy_C;
+double GetTotalReverseReactiveEnergy;
+
+//Apparent Energy
+double GetApparentEnergy_A;
+double GetApparentEnergy_B;
+double GetApparentEnergy_C;
+double GetTotalApparentEnergy;
+
+		
+}Summary_RegTypeDef;
+
 
 /* Fucntion Decleration ---------------------------------------------------- */
 unsigned int RWtoRegister(unsigned char dataRW, unsigned short address, unsigned short data);
-void M90E32AS_Init(int pin, unsigned short lineFreq, unsigned short pgagain, unsigned short ugain, unsigned short igainA, unsigned short igainB, unsigned short igainC);
-void init(void);
+
+void M90E32AS_Init();
 int Read32Register(signed short regh_addr, signed short regl_addr);
+void printSummary(Summary_RegTypeDef *sum);
+void Energy_SetBaudRate(void);
+
+void CalVI(unsigned char channel, double Vref, double Iref);
 
 unsigned short GetSysStatus0(void);
 unsigned short GetSysStatus1(void);
+unsigned short GetMeterStatus0(void);
+unsigned short GetMeterStatus1(void);
+
+//******* Power and Power Factor Fucntions //*******
+
+//RMS for Voltage
+double GetRMSVoltage_A(void); 				 //RMS for Voltage A
+double GetRMSVoltage_B(void); 				 //RMS for Voltage B
+double GetRMSVoltage_C(void); 				 //RMS for Voltage C
+
+//RMS for Current
+double GetRMSCurrent_A(void); 				 //RMS for Current A
+double GetRMSCurrent_B(void); 				 //RMS for Current B
+double GetRMSCurrent_C(void); 				 //RMS for Current C
+
+//Active Power
+double GetActivePower_A(void); 			   //Active Power A
+double GetActivePower_B(void); 			   //Active Power B
+double GetActivePower_C(void); 			   //Active Power C
+double GetTotalActivePower(void); 	   //Total Active Power
+
+//Reactive Power
+double GetReactivePower_A(void); 		   //Reactive Power A
+double GetReactivePower_B(void); 		   //Reactive Power B
+double GetReactivePower_C(void); 		   //Reactive Power C
+double GetTotalReactivePower(void);    //Total Reactive Power
+
+//Apparent Power
+double GetApparentPower_A(void); 		   //Apparent Power A
+double GetApparentPower_B(void); 		   //Apparent Power B
+double GetApparentPower_C(void); 		   //Apparent Power C
+double GetTotalApparentPower(void);    //Total Apparent Power
+
+//Fundamental Power
+double GetFundamentalPower_A(void);    //Fundamental Power A
+double GetFundamentalPower_B(void); 	 //Fundamental Power B
+double GetFundamentalPower_C(void);    //Fundamental Power C
+double GetTotalFundamentalPower(void); //Total Fundamental Power
+
+//Harmonic Power
+double GetHarmonicPower_A(void); 		 //Harmonic Power A
+double GetHarmonicPower_B(void); 		 //Harmonic Power B
+double GetHarmonicPower_C(void); 		 //Harmonic Power C
+double GetTotalHarmonicPower(void);  //Total Harmonic Power 
+
+//******* Power Factor Fucntions //*******
+double GetActivePowerFactor_A(void);
+double GetActivePowerFactor_B(void);
+double GetActivePowerFactor_C(void);
+double GetTotalActivePowerFactor(void);
+
+//******* Phase Angle Functions //*******
+double GetPhaseAngle_A(void);
+double GetPhaseAngle_B(void);
+double GetPhaseAngle_C(void);
 
 
-double GetActivePower_A(void); 			 //Active Power
-double GetReactivePower_A(void); 		 //Reactive Power
-double GetApparentPower_A(void); 		 //Apparent Power
-double GetFundamentalPower_A(void);  //Fundamental Power
-double GetHarmonicPower_A(void); 		 //Harmonic Power
-double GetRMSVoltage_A(void); 				 //RMS for Voltage
-double GetRMSCurrent_A(void); 				 //RMS for Current
-double GetActivePowerFactor_A(void); //Power Factor
-double GetPhaseAngle_A(void); 			 //Phase Angle
 double GetFreq(void); 							 //Frequency
 double GetTemp(void); 							 //Temperature
 double GetPeak_A(void);						   //Peak Value
 
-double CalibrateVI(unsigned short reg, unsigned short actualVal);
+//******* Regular Energy Measurement Functions //*******
+//Forward Active Energy
+double GetForwardActiveEnergy_A(void);
+double GetForwardActiveEnergy_B(void);
+double GetForwardActiveEnergy_C(void);
+double GetTotalForwardActiveEnergy(void);
+
+//Reverse Active Energy
+double GetReverseActiveEnergy_A(void);
+double GetReverseActiveEnergy_B(void);
+double GetReverseActiveEnergy_C(void);
+double GetTotalReverseActiveEnergy(void);
+	
+//Forward Reactive Energy
+double GetForwardReactiveEnergy_A(void);
+double GetForwardReactiveEnergy_B(void);
+double GetForwardReactiveEnergy_C(void);
+double GetTotalForwardReactiveEnergy(void);
+
+//Reverse Reactive Energy
+double GetReverseReactiveEnergy_A(void);
+double GetReverseReactiveEnergy_B(void);
+double GetReverseReactiveEnergy_C(void);
+double GetTotalReverseReactiveEnergy(void);
+
+//Apparent Energy
+double GetApparentEnergy_A(void);
+double GetApparentEnergy_B(void);
+double GetApparentEnergy_C(void);
+double GetTotalApparentEnergy(void);
 
 #endif //__ENERGY_METER__

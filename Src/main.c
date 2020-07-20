@@ -20,11 +20,12 @@
 
 /* Includes ------------------------------------------------------------------*/
 #include "main.h"
-#include "ENERGY_METER.h"
 
 /* Private includes ----------------------------------------------------------*/
 /* USER CODE BEGIN Includes */
-
+#include "ENERGY_METER.h"
+#include "Disp_HAL_SPI_TX.h"
+#include "st7735.h"
 /* USER CODE END Includes */
 
 /* Private typedef -----------------------------------------------------------*/
@@ -62,70 +63,17 @@ static void MX_TIM1_Init(void);
 
 /* Private user code ---------------------------------------------------------*/
 /* USER CODE BEGIN 0 */
-uint8_t spiTx[2];
-int test;
 
-uint8_t regAddr = 0;
-uint16_t storeVal = 0;
+Summary_RegTypeDef summary;
 
-uint8_t spiData2Tx[4];
-uint8_t spiData2Rx[2];
-
-uint16_t store = 0;
-int num = 0;
-
-//************
-double Active_Power_A = 0;
-double Reactive_Power_A = 0;
-double Apparent_Power_A = 0;
-double Fundamental_Power_A = 0;
-double Harmonic_Power_A = 0;
-double RMS_Voltage_A = 0;
-double RMS_Current_A = 0;
-double Power_Factor_A = 0;
-double Phase_Angle_A = 0;
-double Frequency = 0;
-double Temperature = 0;
-double Peak_Value_A = 0;
-
-
-
-/***** CALIBRATION SETTINGS *****/
-
-
-/* 
- * 4485 for 60 Hz (North America)
- * 389 for 50 hz (rest of the world)
- */
-unsigned short lineFreq = 389;         
-
-/* 
- * 0 for 10A (1x)
- * 21 for 100A (2x)
- * 42 for between 100A - 200A (4x)
- */
-unsigned short PGAGain = 0;            
-
-/* 
- * For meter <= v1.3:
- *    42080 - 9v AC Transformer - Jameco 112336
- *    32428 - 12v AC Transformer - Jameco 167151
- * For meter > v1.4:
- *    37106 - 9v AC Transformer - Jameco 157041
- *    38302 - 9v AC Transformer - Jameco 112336
- *    29462 - 12v AC Transformer - Jameco 167151
- * For Meters > v1.4 purchased after 11/1/2019 and rev.3
- *    7611 - 9v AC Transformer - Jameco 157041
- */
-unsigned short VoltageGain = 7611;     
-                                       
+double ApparentWh = 0;
+double ApparentWh2 = 0;
 /*
- * 25498 - SCT-013-000 100A/50mA
- * 39473 - SCT-016 120A/40mA
- * 46539 - Magnalab 100A
- */                                  
-unsigned short CurrentGainCT1 = 39473;  
-unsigned short CurrentGainCT2 = 39473; 
+ * Read the Voltage and Current value from your external reference meter of from your power supply 
+ * 	and write into VoltageRef and CurrentRef for calibration.
+ */
+double VoltageRef = 0xFFFF;             //8.615;//233.6;
+double CurrentRef = 0xFFFF;             //6;//8.798;
 
 /* USER CODE END 0 */
 
@@ -160,11 +108,33 @@ int main(void)
   MX_TIM1_Init();
   /* USER CODE BEGIN 2 */
 	HAL_GPIO_WritePin(CS_GPIO_Port, CS_Pin, GPIO_PIN_SET);
+	HAL_GPIO_WritePin(ST7735_CS_GPIO_Port, ST7735_CS_Pin, GPIO_PIN_SET);
 	HAL_Delay(20);
 	
-	M90E32AS_Init(CS_Pin, 389, PGAGain, VoltageGain, CurrentGainCT1, 0, CurrentGainCT2);
+	//**************** Initialization *****************************
+	
+	ST7735_Init();   //TFT LCD initialization 
+	M90E32AS_Init(); //Energy Meter initialization
+	
 	HAL_Delay(1000);
 	
+	ST7735_FillScreen(ST7735_BLACK);
+	
+	CalVI(Channel_A, VoltageRef, CurrentRef); //Calibrate Voltage and Current for Channel A
+	CalVI(Channel_B, VoltageRef, CurrentRef);	//Calibrate Voltage and Current for Channel B
+	
+	//CalibrationVI(Channel_A, 233.6, 8.798);
+	//CalibrationVI(Channel_B, 233.6, 8.798);
+
+	
+	//**************** RELAYS *****************************
+	
+	HAL_GPIO_WritePin(RELE_1_GPIO_Port, RELE_1_Pin, GPIO_PIN_SET);
+	HAL_GPIO_WritePin(RELE_2_GPIO_Port, RELE_2_Pin, GPIO_PIN_SET);
+	HAL_GPIO_WritePin(RELE_3_GPIO_Port, RELE_3_Pin, GPIO_PIN_SET);
+	HAL_GPIO_WritePin(RELE_N_GPIO_Port, RELE_N_Pin, GPIO_PIN_SET);
+	
+
   /* USER CODE END 2 */
 
   /* Infinite loop */
@@ -176,35 +146,114 @@ int main(void)
     /* USER CODE BEGIN 3 */
 		HAL_GPIO_TogglePin(LED_GPIO_Port, LED_Pin);
 		HAL_Delay(200);
-		//RWtoRegister(WRITE, 0x00, 0x02);
-		storeVal = RWtoRegister(READ, CfgRegAccEn, 0xFFFF);
 		
-		unsigned short sys0 = GetSysStatus0(); //EMMState0
-    unsigned short sys1 = GetSysStatus1(); //EMMState1
+		//************************ Energy Meter ************************
+		printSummary(&summary);
 		
-		//if true the MCU is not getting data from the energy meter
-    if (sys0 == 65535 || sys0 == 0){
-			//error
-			HAL_GPIO_WritePin(LED_GPIO_Port, LED_Pin, GPIO_PIN_SET);
-			test = 1;
-		}
+		ApparentWh += GetApparentEnergy_A();
 		
-		Active_Power_A = GetActivePower_A();
-		Reactive_Power_A = GetReactivePower_A();
-		Apparent_Power_A = GetApparentPower_A();
-		Fundamental_Power_A = GetFundamentalPower_A();
-		Harmonic_Power_A = GetHarmonicPower_A();
-		RMS_Voltage_A = GetRMSVoltage_A();
-		RMS_Current_A = GetRMSCurrent_A();
-		Power_Factor_A = GetActivePowerFactor_A();
-		Phase_Angle_A = GetPhaseAngle_A();
-		Frequency = GetFreq();
-		Temperature = GetTemp();
-		Peak_Value_A = GetPeak_A();
+		ApparentWh2 += GetTotalApparentEnergy();
+		//************************ TFT LCD ************************
 		
-		//store = Read32Register(PmeanA, PmeanALSB);
+		//Voltage
+		ST7735_WriteString(3, 10, "V1: ", Font_7x10, ST7735_WHITE, ST7735_BLACK);
+		ST7735_WriteFloat(30, 10, GetRMSVoltage_A(), Font_7x10, ST7735_WHITE, ST7735_BLACK);
+		
+		ST7735_WriteString(3, 20, "V2: ", Font_7x10, ST7735_WHITE, ST7735_BLACK);
+		ST7735_WriteFloat(30, 20, GetRMSVoltage_B(), Font_7x10, ST7735_WHITE, ST7735_BLACK);
 
-  } 
+		ST7735_WriteString(3, 30, "V3: ", Font_7x10, ST7735_WHITE, ST7735_BLACK);
+		ST7735_WriteFloat(30, 30, GetRMSVoltage_C(), Font_7x10, ST7735_WHITE, ST7735_BLACK);
+		
+		//Active Power
+		ST7735_WriteString(3, 50, "W1: ", Font_7x10, ST7735_WHITE, ST7735_BLACK);
+		ST7735_WriteFloat(30, 50, GetActivePower_A(), Font_7x10, ST7735_WHITE, ST7735_BLACK);
+		
+		ST7735_WriteString(3, 60, "W2: ", Font_7x10, ST7735_WHITE, ST7735_BLACK);
+		ST7735_WriteFloat(30, 60, GetActivePower_B(), Font_7x10, ST7735_WHITE, ST7735_BLACK);
+
+		ST7735_WriteString(3, 70, "W3: ", Font_7x10, ST7735_WHITE, ST7735_BLACK);
+		ST7735_WriteFloat(30, 70, GetActivePower_C(), Font_7x10, ST7735_WHITE, ST7735_BLACK);	
+
+
+		//Current
+		ST7735_WriteString(90, 10, "I1: ", Font_7x10, ST7735_WHITE, ST7735_BLACK);
+		ST7735_WriteFloat(120, 10, GetRMSCurrent_A(), Font_7x10, ST7735_WHITE, ST7735_BLACK);
+		
+		ST7735_WriteString(90, 20, "I2: ", Font_7x10, ST7735_WHITE, ST7735_BLACK);
+		ST7735_WriteFloat(120, 20, GetRMSCurrent_B(), Font_7x10, ST7735_WHITE, ST7735_BLACK);
+		
+		ST7735_WriteString(90, 30, "I3: ", Font_7x10, ST7735_WHITE, ST7735_BLACK);
+		ST7735_WriteFloat(120, 30, GetRMSCurrent_C(), Font_7x10, ST7735_WHITE, ST7735_BLACK);
+		
+		//Apparent Power
+		ST7735_WriteString(80, 50, "VA1: ", Font_7x10, ST7735_WHITE, ST7735_BLACK);
+		ST7735_WriteFloat(110, 50, GetApparentPower_A(), Font_7x10, ST7735_WHITE, ST7735_BLACK);
+		
+		ST7735_WriteString(80, 60, "VA2: ", Font_7x10, ST7735_WHITE, ST7735_BLACK);
+		ST7735_WriteFloat(110, 60, GetApparentPower_B(), Font_7x10, ST7735_WHITE, ST7735_BLACK);
+
+		ST7735_WriteString(80, 70, "VA3: ", Font_7x10, ST7735_WHITE, ST7735_BLACK);
+		ST7735_WriteFloat(110, 70, GetApparentPower_C(), Font_7x10, ST7735_WHITE, ST7735_BLACK);	
+		
+
+		
+		//Temperature 
+		ST7735_WriteFloat(3, 120, GetTemp(), Font_7x10, ST7735_WHITE, ST7735_BLACK);
+	  ST7735_WriteString(40, 120, "°C", Font_7x10, ST7735_WHITE, ST7735_BLACK);	
+		
+		//Frequency 
+		ST7735_WriteFloat(100, 120, GetFreq(), Font_7x10, ST7735_WHITE, ST7735_BLACK);
+	  ST7735_WriteString(140, 120, "Hz", Font_7x10, ST7735_WHITE, ST7735_BLACK);	
+		
+		
+		
+		ST7735_WriteFloat(50, 100, ApparentWh, Font_11x18, ST7735_WHITE, ST7735_BLACK);
+		ST7735_WriteString(100, 100, "Wh", Font_7x10, ST7735_WHITE, ST7735_BLACK);
+		
+		//ST7735_WriteFloat(20, 67, GetRMSVoltage_B(), Font_16x26, ST7735_WHITE, ST7735_BLACK);
+		//ST7735_WriteString(90, 77, "V2", Font_7x10, ST7735_WHITE, ST7735_BLACK);
+		
+		//ST7735_WriteFloat(20, 120, GetRMSVoltage_C(), Font_16x26, ST7735_WHITE, ST7735_BLACK);
+		//ST7735_WriteString(90, 130, "V3", Font_7x10, ST7735_WHITE, ST7735_BLACK);
+
+		
+		/*
+		//Voltage
+		ST7735_WriteString(3, 5, "V1: ", Font_7x10, ST7735_BLACK, ST7735_WHITE);
+		ST7735_WriteFloat(30, 5, GetRMSVoltage_A(), Font_7x10, ST7735_BLACK, ST7735_WHITE);
+		ST7735_WriteString(3, 15, "V2: ", Font_7x10, ST7735_BLACK, ST7735_WHITE);
+		ST7735_WriteFloat(30, 15, GetRMSVoltage_B(), Font_7x10, ST7735_BLACK, ST7735_WHITE);
+		ST7735_WriteString(3, 25, "V3: ", Font_7x10, ST7735_BLACK, ST7735_WHITE);
+		ST7735_WriteFloat(30, 25, GetRMSVoltage_C(), Font_7x10, ST7735_BLACK, ST7735_WHITE);
+		
+		//Current
+		ST7735_WriteString(3, 50, "I1: ", Font_7x10, ST7735_BLACK, ST7735_WHITE);
+		ST7735_WriteFloat(30, 50, GetRMSCurrent_A(), Font_7x10, ST7735_BLACK, ST7735_WHITE);
+		ST7735_WriteString(3, 60, "I2: ", Font_7x10, ST7735_BLACK, ST7735_WHITE);
+		ST7735_WriteFloat(30, 60, GetRMSCurrent_B(), Font_7x10, ST7735_BLACK, ST7735_WHITE);
+		ST7735_WriteString(3, 70, "I3: ", Font_7x10, ST7735_BLACK, ST7735_WHITE);
+		ST7735_WriteFloat(30, 70, GetRMSCurrent_C(), Font_7x10, ST7735_BLACK, ST7735_WHITE);
+		
+		//Active Power
+		ST7735_WriteString(3, 95, "P1: ", Font_7x10, ST7735_BLACK, ST7735_WHITE);
+		ST7735_WriteFloat(30, 95, GetActivePower_A(), Font_7x10, ST7735_BLACK, ST7735_WHITE);
+		ST7735_WriteString(3, 105, "P2: ", Font_7x10, ST7735_BLACK, ST7735_WHITE);
+		ST7735_WriteFloat(30, 105, GetActivePower_B(), Font_7x10, ST7735_BLACK, ST7735_WHITE);
+		ST7735_WriteString(3, 115, "P3: ", Font_7x10, ST7735_BLACK, ST7735_WHITE);
+		ST7735_WriteFloat(30, 115, GetActivePower_C(), Font_7x10, ST7735_BLACK, ST7735_WHITE);
+		
+		//Frequency 
+		ST7735_WriteString(90, 5, "Hz : ", Font_7x10, ST7735_BLACK, ST7735_WHITE);
+		ST7735_WriteFloat(120, 5, GetFreq(), Font_7x10, ST7735_BLACK, ST7735_WHITE);
+		
+		//ST7735_WriteString(70, 5, "*", Font_7x10, ST7735_BLACK, ST7735_WHITE);
+		
+		//Total (Arithmetic Sum) Apparent Energy
+		//ST7735_WriteString(40, 100, "Active : ", Font_7x10, ST7735_BLACK, ST7735_WHITE);
+		//ST7735_WriteFloat(100, 100, summary.GetWh, Font_7x10, ST7735_BLACK, ST7735_WHITE);
+		*/
+  }
   /* USER CODE END 3 */
 }
 
@@ -264,7 +313,7 @@ static void MX_SPI1_Init(void)
   hspi1.Init.CLKPolarity = SPI_POLARITY_HIGH;
   hspi1.Init.CLKPhase = SPI_PHASE_2EDGE;
   hspi1.Init.NSS = SPI_NSS_SOFT;
-  hspi1.Init.BaudRatePrescaler = SPI_BAUDRATEPRESCALER_32;
+  hspi1.Init.BaudRatePrescaler = SPI_BAUDRATEPRESCALER_8;
   hspi1.Init.FirstBit = SPI_FIRSTBIT_MSB;
   hspi1.Init.TIMode = SPI_TIMODE_DISABLE;
   hspi1.Init.CRCCalculation = SPI_CRCCALCULATION_DISABLE;
@@ -358,12 +407,19 @@ static void MX_GPIO_Init(void)
   /* GPIO Ports Clock Enable */
   __HAL_RCC_GPIOF_CLK_ENABLE();
   __HAL_RCC_GPIOA_CLK_ENABLE();
+  __HAL_RCC_GPIOB_CLK_ENABLE();
 
   /*Configure GPIO pin Output Level */
   HAL_GPIO_WritePin(LED_GPIO_Port, LED_Pin, GPIO_PIN_RESET);
 
   /*Configure GPIO pin Output Level */
+  HAL_GPIO_WritePin(GPIOA, ST7735_DC_Pin|ST7735_CS_Pin|ST7735_RES_Pin, GPIO_PIN_RESET);
+
+  /*Configure GPIO pin Output Level */
   HAL_GPIO_WritePin(CS_GPIO_Port, CS_Pin, GPIO_PIN_SET);
+
+  /*Configure GPIO pin Output Level */
+  HAL_GPIO_WritePin(GPIOB, RELE_1_Pin|RELE_2_Pin|RELE_3_Pin|RELE_N_Pin, GPIO_PIN_RESET);
 
   /*Configure GPIO pin : LED_Pin */
   GPIO_InitStruct.Pin = LED_Pin;
@@ -372,12 +428,26 @@ static void MX_GPIO_Init(void)
   GPIO_InitStruct.Speed = GPIO_SPEED_FREQ_LOW;
   HAL_GPIO_Init(LED_GPIO_Port, &GPIO_InitStruct);
 
+  /*Configure GPIO pins : ST7735_DC_Pin ST7735_CS_Pin ST7735_RES_Pin */
+  GPIO_InitStruct.Pin = ST7735_DC_Pin|ST7735_CS_Pin|ST7735_RES_Pin;
+  GPIO_InitStruct.Mode = GPIO_MODE_OUTPUT_PP;
+  GPIO_InitStruct.Pull = GPIO_NOPULL;
+  GPIO_InitStruct.Speed = GPIO_SPEED_FREQ_LOW;
+  HAL_GPIO_Init(GPIOA, &GPIO_InitStruct);
+
   /*Configure GPIO pin : CS_Pin */
   GPIO_InitStruct.Pin = CS_Pin;
   GPIO_InitStruct.Mode = GPIO_MODE_OUTPUT_PP;
   GPIO_InitStruct.Pull = GPIO_PULLUP;
   GPIO_InitStruct.Speed = GPIO_SPEED_FREQ_HIGH;
   HAL_GPIO_Init(CS_GPIO_Port, &GPIO_InitStruct);
+
+  /*Configure GPIO pins : RELE_1_Pin RELE_2_Pin RELE_3_Pin RELE_N_Pin */
+  GPIO_InitStruct.Pin = RELE_1_Pin|RELE_2_Pin|RELE_3_Pin|RELE_N_Pin;
+  GPIO_InitStruct.Mode = GPIO_MODE_OUTPUT_PP;
+  GPIO_InitStruct.Pull = GPIO_NOPULL;
+  GPIO_InitStruct.Speed = GPIO_SPEED_FREQ_LOW;
+  HAL_GPIO_Init(GPIOB, &GPIO_InitStruct);
 
 }
 
