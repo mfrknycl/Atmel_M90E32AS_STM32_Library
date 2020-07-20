@@ -17,7 +17,7 @@ These instructions will get you started.
 
 ### Setup
 
-```
+```c
 #include "ENERGY_METER.h"
 
 int main(void){
@@ -27,7 +27,7 @@ int main(void){
 ```
 Following code segment shows that how SPI is configurated using STM32CubeMX software.
 
-```
+```c
 static void MX_SPI1_Init(void)
 {
 
@@ -68,13 +68,13 @@ static void MX_SPI1_Init(void)
 
 Install HAL library for the STM32
 
-```
+```c
 #include "stm32f0xx_hal.h"
 ```
 
 Install the M90E32AS Library
 
-```
+```c
 #include "ENERGY_METER.h"
 ```
 
@@ -90,35 +90,35 @@ This library is made for 3P3W system. It works under 230V/50Hz. The M90E32AS wor
 
 ### Metering Functions
 #### Regular Energy Functions
-```
+```c
 //Forward Active Energy
 double GetForwardActiveEnergy_A(void);
 double GetForwardActiveEnergy_B(void);
 double GetForwardActiveEnergy_C(void);
 double GetTotalForwardActiveEnergy(void);
 ```
-```
+```c
 //Reverse Active Energy
 double GetReverseActiveEnergy_A(void);
 double GetReverseActiveEnergy_B(void);
 double GetReverseActiveEnergy_C(void);
 double GetTotalReverseActiveEnergy(void);
 ```
-```
+```c
 //Forward Reactive Energy
 double GetForwardReactiveEnergy_A(void);
 double GetForwardReactiveEnergy_B(void);
 double GetForwardReactiveEnergy_C(void);
 double GetTotalForwardReactiveEnergy(void);
 ```
-```
+```c
 //Reverse Reactive Energy
 double GetReverseReactiveEnergy_A(void);
 double GetReverseReactiveEnergy_B(void);
 double GetReverseReactiveEnergy_C(void);
 double GetTotalReverseReactiveEnergy(void);
 ```
-```
+```c
 //Apparent Energy
 double GetApparentEnergy_A(void);
 double GetApparentEnergy_B(void);
@@ -128,21 +128,21 @@ double GetTotalApparentEnergy(void);
 
 ### Measurement Functions
 #### Active / Reactive / Apparent Power
-```
+```c
 //Active Power
 double GetActivePower_A(void); 			  
 double GetActivePower_B(void); 			   
 double GetActivePower_C(void); 			  
 double GetTotalActivePower(void); 	   
 ```
-```
+```c
 //Reactive Power
 double GetReactivePower_A(void); 		 
 double GetReactivePower_B(void); 		  
 double GetReactivePower_C(void); 		  
 double GetTotalReactivePower(void);    
 ```
-```
+```c
 //Apparent Power
 double GetApparentPower_A(void); 		   
 double GetApparentPower_B(void); 		   
@@ -150,14 +150,14 @@ double GetApparentPower_C(void);
 double GetTotalApparentPower(void);    
 ```
 #### Fundamental / Harmonic Power
-```
+```c
 //Fundamental Power
 double GetFundamentalPower_A(void);    
 double GetFundamentalPower_B(void); 	
 double GetFundamentalPower_C(void);   
 double GetTotalFundamentalPower(void);
 ```
-```
+```c
 //Harmonic Power
 double GetHarmonicPower_A(void); 		 
 double GetHarmonicPower_B(void); 		 
@@ -165,37 +165,37 @@ double GetHarmonicPower_C(void);
 double GetTotalHarmonicPower(void);  
 ```
 #### RMS for Voltage and Current
-```
+```c
 //RMS for Voltage
 double GetRMSVoltage_A(void); 				 
 double GetRMSVoltage_B(void); 				 
 double GetRMSVoltage_C(void); 				 
 ```
-```
+```c
 //RMS for Current
 double GetRMSCurrent_A(void); 				 
 double GetRMSCurrent_B(void); 				
 double GetRMSCurrent_C(void); 				 
 ```
 #### Power Factor
-```
+```c
 double GetActivePowerFactor_A(void);
 double GetActivePowerFactor_B(void);
 double GetActivePowerFactor_C(void);
 double GetTotalActivePowerFactor(void);
 ```
 #### Phase Angle
-```
+```c
 double GetPhaseAngle_A(void);
 double GetPhaseAngle_B(void);
 double GetPhaseAngle_C(void);
 ```
 #### Frequency
-```
+```c
 double GetFreq(void); 	
 ```
 #### Temperature
-```
+```c
 double GetTemp(void);
 ```
 
